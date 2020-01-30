@@ -28,8 +28,11 @@ def visualizeSampleText(df):
 
 def prepareData(df):
     # Concat three main text columns
-    df['text_all_concat'] = ['\n\n'.join([i,j,k]) for i,j,k in zip(df.question_title, df.question_body, df.answer)]
+    df['text_all'] = ['\n\n'.join([i,j,k]) for i,j,k in zip(df.question_title, df.question_body, df.answer)]
     # Clean numbers
-    df['text_concat_filter'] = [re.sub('[0-9]+[^ ,.]*[0-9]*', '_num_', i) for i in df.text_all_concat]
+    df['text_all_clean'] = [re.sub('[0-9]+[^ ,.]*[0-9]*', '_num_', i) for i in df.text_all]
+    
+    df['question_text'] = ['\n\n'.join([i,j]) for i,j in zip(df.question_title, df.question_body)]
+    df['question_text_clean'] = [re.sub('[0-9]+[^ ,.]*[0-9]*', '_num_', i) for i in df.question_text]
 
     return df
