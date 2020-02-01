@@ -1,5 +1,13 @@
 import numpy as np
 import pandas as pd
+import unidecode
+
+from scipy.stats import spearmanr
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.regularizers import l1, l2
+
 import re
 import os
 
@@ -26,8 +34,7 @@ def visualizeSampleText(df):
         print(df.answer[i])
         
 def cleanText(texts):
-    return [re.sub('[0-9]+[^ ,.]*[0-9]*', '_num_', i) for i in texts]
-
+    return [unidecode.unidecode(re.sub('[0-9]+[^ ,.]*[0-9]*', '_num_', i).lower().strip()) for i in texts]
 
 def prepareData(df):
     # Concat three main text columns
@@ -41,3 +48,32 @@ def prepareData(df):
     df['answer_text_clean'] = cleanText(df.answer)
 
     return df
+
+def create_model(output_dim, input_dim, loss, reg=l2(0.01), activation='sigmoid', optimizer='adam'):
+    model = Sequential()
+    model.add(Dense(output_dim, input_dim=input_dim, activation=activation, activity_regularizer=reg))
+
+    model.compile(optimizer=optimizer, loss=loss)
+    return model
+
+
+def train_model(model, X_train, y_train, X_test=None, y_test=None, batch_size=64, nb_epoch=100, verbose=1):
+    if X_test is not None and y_test is not None:
+
+        model.fit(X_train.toarray(), y_train.as_matrix(),
+                  batch_size=batch_size,
+                  epochs=nb_epoch,
+                  verbose=verbose,
+                  validation_data=(X_test.toarray(), y_test.as_matrix()))
+    else:
+        model.fit(X_train.toarray(), y_train.as_matrix(),
+                  batch_size=batch_size,
+                  epochs=nb_epoch,
+                  verbose=verbose)
+
+    return model
+
+
+def spearman_corr(y_true, y_pred):
+
+    return np.mean([spearmanr(y_pred[:, i], y_true.iloc[:, i]).correlation for i in range(y_true.shape[1])])
